@@ -23,7 +23,7 @@ use Auth0\SDK\Utility\TransientStoreHandler;
  */
 final class Auth0 implements Auth0Interface
 {
-    public const VERSION = '8.3.7';
+    public const VERSION = '8.3.8';
 
     /**
      * Instance of SdkConfiguration, for shared configuration across classes.
@@ -102,7 +102,14 @@ final class Auth0 implements Auth0Interface
 
         $store = $this->getTransientStore();
         $params = $params ?? [];
-        $state = $params['state'] ?? $store?->issue('state') ?? uniqid();
+        if ($params['state']) {
+            $state = $params['state'];
+
+            // Store provided state in transient store instead of issuing a new nonce
+            $store?->store('state', $params['state']);
+        } else {
+            $state = $store?->issue('state') ?? uniqid();
+        }
         $params['nonce'] = $params['nonce'] ?? $store?->issue('nonce') ?? uniqid();
         $params['max_age'] = $params['max_age'] ?? $this->configuration()->getTokenMaxAge();
 
